@@ -1,0 +1,6 @@
+{
+  "name": "Planery Core — Gestión de Eventos Corporativos",
+  "description": "Plataforma empresarial de gestión de eventos corporativos, proveedores, presupuestos, pagos, documentos, tareas y auditoría bajo el sistema de diseño Executive Precision.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
