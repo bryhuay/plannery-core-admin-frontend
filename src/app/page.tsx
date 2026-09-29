@@ -3,7 +3,7 @@
 import React, { useState } from 'react';
 import { Link, useRouter } from '../lib/navigation';
 import { usePlanery } from '../context/PlaneryContext';
-import { CrearTareaDrawer } from '../components/modals/CrearTareaDrawer';
+import { CreateTaskDrawer } from '../components/modals/CreateTaskDrawer';
 
 export default function DashboardPage() {
   const router = useRouter();
@@ -576,7 +576,7 @@ export default function DashboardPage() {
         </div>
       </main>
 
-      <CrearTareaDrawer
+      <CreateTaskDrawer
         isOpen={isTaskDrawerOpen}
         onClose={() => setIsTaskDrawerOpen(false)}
         eventId="EV-2026-084"

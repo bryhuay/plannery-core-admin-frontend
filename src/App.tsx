@@ -8,19 +8,19 @@ import { NavigationProvider, usePathname } from './lib/navigation';
 import { PlaneryProvider } from './context/PlaneryContext';
 import RootLayout from './app/layout';
 import DashboardPage from './app/page';
-import EventosPage from './app/eventos/page';
-import CrearEventoPage from './app/eventos/nuevo/page';
-import DetalleEventoPage from './app/eventos/[id]/page';
-import ProveedoresPage from './app/proveedores/page';
-import CalendarioPage from './app/calendario/page';
-import PagosPage from './app/pagos/page';
-import EmpresasPage from './app/empresas/page';
-import UsuariosPage from './app/usuarios/page';
-import SuscripcionesPage from './app/suscripciones/page';
-import ConfiguracionPage from './app/configuracion/page';
+import EventsPage from './app/events/page';
+import CreateEventPage from './app/events/new/page';
+import EventDetailPage from './app/events/[id]/page';
+import ProvidersPage from './app/providers/page';
+import CalendarPage from './app/calendar/page';
+import PaymentsPage from './app/payments/page';
+import CompaniesPage from './app/companies/page';
+import UsersPage from './app/users/page';
+import SubscriptionsPage from './app/subscriptions/page';
+import SettingsPage from './app/settings/page';
 import UiKitPage from './app/ui-kit/page';
-import PerfilPage from './app/perfil/page';
-import NotificacionesPage from './app/notificaciones/page';
+import ProfilePage from './app/profile/page';
+import NotificationsPage from './app/notifications/page';
 import LoginPage from './app/login/page';
 
 function AppRouter() {
@@ -32,44 +32,44 @@ function AppRouter() {
   if (pathname === '/' || pathname === '') {
     return <DashboardPage />;
   }
-  if (pathname === '/eventos') {
-    return <EventosPage />;
+  if (pathname === '/events' || pathname === '/eventos') {
+    return <EventsPage />;
   }
-  if (pathname === '/eventos/nuevo') {
-    return <CrearEventoPage />;
+  if (pathname === '/events/new' || pathname === '/eventos/nuevo') {
+    return <CreateEventPage />;
   }
-  if (pathname.startsWith('/eventos/')) {
-    return <DetalleEventoPage />;
+  if (pathname.startsWith('/events/') || pathname.startsWith('/eventos/')) {
+    return <EventDetailPage />;
   }
-  if (pathname === '/proveedores') {
-    return <ProveedoresPage />;
+  if (pathname === '/providers' || pathname === '/proveedores') {
+    return <ProvidersPage />;
   }
-  if (pathname === '/calendario') {
-    return <CalendarioPage />;
+  if (pathname === '/calendar' || pathname === '/calendario') {
+    return <CalendarPage />;
   }
-  if (pathname === '/pagos') {
-    return <PagosPage />;
+  if (pathname === '/payments' || pathname === '/pagos') {
+    return <PaymentsPage />;
   }
-  if (pathname === '/empresas') {
-    return <EmpresasPage />;
+  if (pathname === '/companies' || pathname === '/empresas') {
+    return <CompaniesPage />;
   }
-  if (pathname === '/usuarios') {
-    return <UsuariosPage />;
+  if (pathname === '/users' || pathname === '/usuarios') {
+    return <UsersPage />;
   }
-  if (pathname === '/suscripciones') {
-    return <SuscripcionesPage />;
+  if (pathname === '/subscriptions' || pathname === '/suscripciones') {
+    return <SubscriptionsPage />;
   }
-  if (pathname === '/configuracion') {
-    return <ConfiguracionPage />;
+  if (pathname === '/settings' || pathname === '/configuracion') {
+    return <SettingsPage />;
   }
   if (pathname === '/ui-kit') {
     return <UiKitPage />;
   }
-  if (pathname === '/perfil') {
-    return <PerfilPage />;
+  if (pathname === '/profile' || pathname === '/perfil') {
+    return <ProfilePage />;
   }
-  if (pathname === '/notificaciones') {
-    return <NotificacionesPage />;
+  if (pathname === '/notifications' || pathname === '/notificaciones') {
+    return <NotificationsPage />;
   }
 
   return <DashboardPage />;

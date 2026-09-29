@@ -344,9 +344,9 @@ export default function UiKitPage() {
 ├── components/
 │   ├── navigation/                  # Sidebar.tsx, Header.tsx, Footer.tsx
 │   ├── ui/                          # Button.tsx, MetricCard.tsx, StatusBadge.tsx, Toast.tsx
-│   ├── eventos/                     # TabResumen.tsx, TabFinanzas.tsx, TabOperaciones.tsx
+│   ├── eventos/                     # EventSummaryTab.tsx, TabFinanzas.tsx, TabOperaciones.tsx
 │   ├── modals/                      # Drawers y Modales interactivos ('use client')
-│   └── forms/                       # FormularioProveedorDrawer.tsx ('use client')
+│   └── forms/                       # ProviderFormDrawer.tsx ('use client')
 ├── context/
 │   └── PlaneryContext.tsx           # Estado Global Reactivo con CRUD completo
 └── types/
