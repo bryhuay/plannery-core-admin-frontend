@@ -30,11 +30,24 @@ export const CreateUserModal: React.FC<CreateUserModalProps> = ({
   if (!isOpen) return null;
 
   const selectedCompany = companies.find((c) => c.id === companyId);
+  const isPlatformStaff = companyId === 'plataforma';
 
-  const roleCapabilities: Record<
-    Exclude<PlatformUserRole, 'Super Admin'>,
-    string[]
-  > = {
+  const handleCompanyChange = (nextCompanyId: string) => {
+    setCompanyId(nextCompanyId);
+    if (nextCompanyId === 'plataforma') {
+      setSelectedRole('Super Admin');
+    } else if (selectedRole === 'Super Admin') {
+      setSelectedRole('Company Admin');
+    }
+  };
+
+  const roleCapabilities: Record<PlatformUserRole, string[]> = {
+    'Super Admin': [
+      'Gestión Global de Empresas',
+      'Control de Suscripciones',
+      'Catálogos y Configuración',
+      'Auditoría de Plataforma',
+    ],
     'Company Admin': [
       'Gestión de Eventos',
       'Módulo Proveedores',
@@ -55,10 +68,7 @@ export const CreateUserModal: React.FC<CreateUserModalProps> = ({
     ],
   };
 
-  const currentCapabilities =
-    selectedRole === 'Super Admin'
-      ? roleCapabilities['Company Admin']
-      : roleCapabilities[selectedRole];
+  const currentCapabilities = roleCapabilities[selectedRole];
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -82,6 +92,8 @@ export const CreateUserModal: React.FC<CreateUserModalProps> = ({
     setLastName('');
     setEmail('');
     setPhone('');
+    setCompanyId(companies[0]?.id || 'EMP-2026-0042');
+    setSelectedRole('Company Admin');
     onClose();
   };
 
@@ -249,7 +261,7 @@ export const CreateUserModal: React.FC<CreateUserModalProps> = ({
                   <select
                     id="crear-usr-empresa"
                     value={companyId}
-                    onChange={(e) => setCompanyId(e.target.value)}
+                    onChange={(e) => handleCompanyChange(e.target.value)}
                     className="w-full bg-white border border-slate-300 rounded-xl px-3.5 py-2.5 text-xs text-[#151C27] focus:outline-none focus:border-[#F2C94C] focus:ring-2 focus:ring-[#F2C94C]/20 transition-all"
                   >
                     {companies.map((comp) => (
@@ -311,118 +323,159 @@ export const CreateUserModal: React.FC<CreateUserModalProps> = ({
               </div>
 
               {/* RBAC Selection Cards */}
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-3 mb-4">
-                {/* Company Admin */}
-                <label
-                  onClick={() => setSelectedRole('Company Admin')}
-                  className={`relative flex flex-col p-4 rounded-xl cursor-pointer transition-all ${
-                    selectedRole === 'Company Admin'
-                      ? 'border-2 border-[#F2C94C] bg-[#FEFBF0]/60 shadow-xs'
-                      : 'border border-slate-200 bg-white hover:border-slate-300'
-                  }`}
-                >
-                  <div className="flex items-center justify-between mb-2">
-                    <div
-                      className={`w-7 h-7 rounded-md flex items-center justify-center ${
-                        selectedRole === 'Company Admin'
-                          ? 'bg-[#F2C94C]/25 text-[#6B5400]'
-                          : 'bg-slate-100 text-slate-600'
-                      }`}
-                    >
-                      <span className="material-symbols-outlined text-[18px]">
-                        admin_panel_settings
-                      </span>
+              {isPlatformStaff ? (
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-3 mb-4">
+                  {/* Super Admin */}
+                  <label
+                    onClick={() => setSelectedRole('Super Admin')}
+                    className={`relative flex flex-col p-4 rounded-xl cursor-pointer transition-all ${
+                      selectedRole === 'Super Admin'
+                        ? 'border-2 border-[#F2C94C] bg-[#FEFBF0]/60 shadow-xs'
+                        : 'border border-slate-200 bg-white hover:border-slate-300'
+                    }`}
+                  >
+                    <div className="flex items-center justify-between mb-2">
+                      <div
+                        className={`w-7 h-7 rounded-md flex items-center justify-center ${
+                          selectedRole === 'Super Admin'
+                            ? 'bg-[#F2C94C]/25 text-[#6B5400]'
+                            : 'bg-slate-100 text-slate-600'
+                        }`}
+                      >
+                        <span className="material-symbols-outlined text-[18px]">
+                          shield_person
+                        </span>
+                      </div>
+                      <input
+                        type="radio"
+                        name="rol"
+                        checked={selectedRole === 'Super Admin'}
+                        onChange={() => setSelectedRole('Super Admin')}
+                        className="w-4 h-4 accent-[#F2C94C]"
+                      />
                     </div>
-                    <input
-                      type="radio"
-                      name="rol"
-                      checked={selectedRole === 'Company Admin'}
-                      onChange={() => setSelectedRole('Company Admin')}
-                      className="w-4 h-4 accent-[#F2C94C]"
-                    />
-                  </div>
-                  <span className="text-sm font-bold text-[#151C27] mb-1">
-                    Company Admin
-                  </span>
-                  <p className="text-[11px] text-[#575E70] leading-snug">
-                    Control total sobre eventos, catálogo de proveedores, finanzas y usuarios de la empresa.
-                  </p>
-                </label>
+                    <span className="text-sm font-bold text-[#151C27] mb-1">
+                      Super Admin
+                    </span>
+                    <p className="text-[11px] text-[#575E70] leading-snug">
+                      Control global de nivel plataforma: gestión de empresas clientes, suscripciones, catálogos globales y auditoría.
+                    </p>
+                  </label>
+                </div>
+              ) : (
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-3 mb-4">
+                  {/* Company Admin */}
+                  <label
+                    onClick={() => setSelectedRole('Company Admin')}
+                    className={`relative flex flex-col p-4 rounded-xl cursor-pointer transition-all ${
+                      selectedRole === 'Company Admin'
+                        ? 'border-2 border-[#F2C94C] bg-[#FEFBF0]/60 shadow-xs'
+                        : 'border border-slate-200 bg-white hover:border-slate-300'
+                    }`}
+                  >
+                    <div className="flex items-center justify-between mb-2">
+                      <div
+                        className={`w-7 h-7 rounded-md flex items-center justify-center ${
+                          selectedRole === 'Company Admin'
+                            ? 'bg-[#F2C94C]/25 text-[#6B5400]'
+                            : 'bg-slate-100 text-slate-600'
+                        }`}
+                      >
+                        <span className="material-symbols-outlined text-[18px]">
+                          admin_panel_settings
+                        </span>
+                      </div>
+                      <input
+                        type="radio"
+                        name="rol"
+                        checked={selectedRole === 'Company Admin'}
+                        onChange={() => setSelectedRole('Company Admin')}
+                        className="w-4 h-4 accent-[#F2C94C]"
+                      />
+                    </div>
+                    <span className="text-sm font-bold text-[#151C27] mb-1">
+                      Company Admin
+                    </span>
+                    <p className="text-[11px] text-[#575E70] leading-snug">
+                      Control total sobre eventos, catálogo de proveedores, finanzas y usuarios de la empresa.
+                    </p>
+                  </label>
 
-                {/* Planner */}
-                <label
-                  onClick={() => setSelectedRole('Planner')}
-                  className={`relative flex flex-col p-4 rounded-xl cursor-pointer transition-all ${
-                    selectedRole === 'Planner'
-                      ? 'border-2 border-[#F2C94C] bg-[#FEFBF0]/60 shadow-xs'
-                      : 'border border-slate-200 bg-white hover:border-slate-300'
-                  }`}
-                >
-                  <div className="flex items-center justify-between mb-2">
-                    <div
-                      className={`w-7 h-7 rounded-md flex items-center justify-center ${
-                        selectedRole === 'Planner'
-                          ? 'bg-[#F2C94C]/25 text-[#6B5400]'
-                          : 'bg-slate-100 text-slate-600'
-                      }`}
-                    >
-                      <span className="material-symbols-outlined text-[18px]">
-                        event_available
-                      </span>
+                  {/* Planner */}
+                  <label
+                    onClick={() => setSelectedRole('Planner')}
+                    className={`relative flex flex-col p-4 rounded-xl cursor-pointer transition-all ${
+                      selectedRole === 'Planner'
+                        ? 'border-2 border-[#F2C94C] bg-[#FEFBF0]/60 shadow-xs'
+                        : 'border border-slate-200 bg-white hover:border-slate-300'
+                    }`}
+                  >
+                    <div className="flex items-center justify-between mb-2">
+                      <div
+                        className={`w-7 h-7 rounded-md flex items-center justify-center ${
+                          selectedRole === 'Planner'
+                            ? 'bg-[#F2C94C]/25 text-[#6B5400]'
+                            : 'bg-slate-100 text-slate-600'
+                        }`}
+                      >
+                        <span className="material-symbols-outlined text-[18px]">
+                          event_available
+                        </span>
+                      </div>
+                      <input
+                        type="radio"
+                        name="rol"
+                        checked={selectedRole === 'Planner'}
+                        onChange={() => setSelectedRole('Planner')}
+                        className="w-4 h-4 accent-[#F2C94C]"
+                      />
                     </div>
-                    <input
-                      type="radio"
-                      name="rol"
-                      checked={selectedRole === 'Planner'}
-                      onChange={() => setSelectedRole('Planner')}
-                      className="w-4 h-4 accent-[#F2C94C]"
-                    />
-                  </div>
-                  <span className="text-sm font-bold text-[#151C27] mb-1">
-                    Planner
-                  </span>
-                  <p className="text-[11px] text-[#575E70] leading-snug">
-                    Coordinador de eventos asignados, actualización de hitos, tareas y contacto con proveedores.
-                  </p>
-                </label>
+                    <span className="text-sm font-bold text-[#151C27] mb-1">
+                      Planner
+                    </span>
+                    <p className="text-[11px] text-[#575E70] leading-snug">
+                      Coordinador de eventos asignados, actualización de hitos, tareas y contacto con proveedores.
+                    </p>
+                  </label>
 
-                {/* Client */}
-                <label
-                  onClick={() => setSelectedRole('Client')}
-                  className={`relative flex flex-col p-4 rounded-xl cursor-pointer transition-all ${
-                    selectedRole === 'Client'
-                      ? 'border-2 border-[#F2C94C] bg-[#FEFBF0]/60 shadow-xs'
-                      : 'border border-slate-200 bg-white hover:border-slate-300'
-                  }`}
-                >
-                  <div className="flex items-center justify-between mb-2">
-                    <div
-                      className={`w-7 h-7 rounded-md flex items-center justify-center ${
-                        selectedRole === 'Client'
-                          ? 'bg-[#F2C94C]/25 text-[#6B5400]'
-                          : 'bg-slate-100 text-slate-600'
-                      }`}
-                    >
-                      <span className="material-symbols-outlined text-[18px]">
-                        person
-                      </span>
+                  {/* Client */}
+                  <label
+                    onClick={() => setSelectedRole('Client')}
+                    className={`relative flex flex-col p-4 rounded-xl cursor-pointer transition-all ${
+                      selectedRole === 'Client'
+                        ? 'border-2 border-[#F2C94C] bg-[#FEFBF0]/60 shadow-xs'
+                        : 'border border-slate-200 bg-white hover:border-slate-300'
+                    }`}
+                  >
+                    <div className="flex items-center justify-between mb-2">
+                      <div
+                        className={`w-7 h-7 rounded-md flex items-center justify-center ${
+                          selectedRole === 'Client'
+                            ? 'bg-[#F2C94C]/25 text-[#6B5400]'
+                            : 'bg-slate-100 text-slate-600'
+                        }`}
+                      >
+                        <span className="material-symbols-outlined text-[18px]">
+                          person
+                        </span>
+                      </div>
+                      <input
+                        type="radio"
+                        name="rol"
+                        checked={selectedRole === 'Client'}
+                        onChange={() => setSelectedRole('Client')}
+                        className="w-4 h-4 accent-[#F2C94C]"
+                      />
                     </div>
-                    <input
-                      type="radio"
-                      name="rol"
-                      checked={selectedRole === 'Client'}
-                      onChange={() => setSelectedRole('Client')}
-                      className="w-4 h-4 accent-[#F2C94C]"
-                    />
-                  </div>
-                  <span className="text-sm font-bold text-[#151C27] mb-1">
-                    Client
-                  </span>
-                  <p className="text-[11px] text-[#575E70] leading-snug">
-                    Acceso de sólo lectura y aprobaciones al portal de invitados, cronograma y estados de pago.
-                  </p>
-                </label>
-              </div>
+                    <span className="text-sm font-bold text-[#151C27] mb-1">
+                      Client
+                    </span>
+                    <p className="text-[11px] text-[#575E70] leading-snug">
+                      Acceso de sólo lectura y aprobaciones al portal de invitados, cronograma y estados de pago.
+                    </p>
+                  </label>
+                </div>
+              )}
 
               {/* Alerta Informativa RBAC Super Admin */}
               <div className="p-3 bg-amber-50/70 border border-amber-200/80 rounded-xl flex items-start gap-2.5 text-xs text-amber-900">
@@ -433,11 +486,23 @@ export const CreateUserModal: React.FC<CreateUserModalProps> = ({
                   <span className="font-bold">
                     Política de Seguridad Planery Core:{' '}
                   </span>
-                  El rol{' '}
-                  <code className="font-mono bg-amber-100/70 px-1 py-0.5 rounded text-[11px]">
-                    Super Admin
-                  </code>{' '}
-                  se encuentra protegido bajo doble factor corporativo y solo puede ser concedido o revocado desde la consola de infraestructura en la nube.
+                  {isPlatformStaff ? (
+                    <>
+                      Para usuarios internos de nivel plataforma (Staff) se asigna exclusivamente el rol{' '}
+                      <code className="font-mono bg-amber-100/70 px-1 py-0.5 rounded text-[11px]">
+                        Super Admin
+                      </code>{' '}
+                      con protección de doble factor corporativo.
+                    </>
+                  ) : (
+                    <>
+                      El rol{' '}
+                      <code className="font-mono bg-amber-100/70 px-1 py-0.5 rounded text-[11px]">
+                        Super Admin
+                      </code>{' '}
+                      está reservado exclusivamente para usuarios internos de nivel plataforma (Staff / Auditoría).
+                    </>
+                  )}
                 </div>
               </div>
 

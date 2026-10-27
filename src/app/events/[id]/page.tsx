@@ -116,6 +116,14 @@ export default function EventDetailPage() {
                   <span className="w-1.5 h-1.5 rounded-full bg-amber-500" />
                   {currentEvent.status}
                 </span>
+                {currentEvent.companyName && (
+                  <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-medium bg-[#e7eefe] text-slate-800 border border-[#dce2f3]">
+                    <span className="material-symbols-outlined text-[13px] text-[#745b00]">
+                      domain
+                    </span>
+                    {currentEvent.companyName}
+                  </span>
+                )}
               </div>
               <p className="text-xs font-mono text-slate-500">
                 Código identificador de proyecto:{' '}

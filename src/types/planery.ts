@@ -51,6 +51,8 @@ export interface EventItem {
   committedAmount: number;
   status: EventStatus;
   description?: string;
+  companyId?: string;
+  companyName?: string;
 }
 
 export type ProviderCategory =
@@ -70,6 +72,9 @@ export interface Provider {
   legalName: string;
   ruc: string;
   category: ProviderCategory;
+  categories?: ProviderCategory[];
+  companyId?: string;
+  companyName?: string;
   description: string;
   contactName: string;
   phone: string;
@@ -85,7 +90,86 @@ export interface Provider {
   viewed?: boolean;
 }
 
-export type EventProviderStatus = 'Confirmado' | 'Seleccionado' | 'En evaluación' | 'Propuesto' | 'Rechazado';
+export type EventProviderStatus =
+  | 'PROPUESTO'
+  | 'SELECCIONADO'
+  | 'CONFIRMADO'
+  | 'RECHAZADO'
+  | 'CANCELADO'
+  | 'Propuesto'
+  | 'Seleccionado'
+  | 'Confirmado'
+  | 'Rechazado'
+  | 'Cancelado'
+  | 'En evaluación';
+
+export type StrictProviderStatus = 'PROPUESTO' | 'SELECCIONADO' | 'CONFIRMADO' | 'RECHAZADO' | 'CANCELADO';
+
+export const STRICT_PROVIDER_STATUS_MAP = {
+  PROPOSED: 'PROPUESTO',
+  SELECTED: 'SELECCIONADO',
+  CONFIRMED: 'CONFIRMADO',
+  REFUSED: 'RECHAZADO',
+  CANCELED: 'CANCELADO',
+} as const;
+
+export const ALLOWED_STATUS_TRANSITIONS: Record<StrictProviderStatus, StrictProviderStatus[]> = {
+  PROPUESTO: ['SELECCIONADO', 'RECHAZADO'],
+  SELECCIONADO: ['CONFIRMADO', 'CANCELADO'],
+  CONFIRMADO: ['CANCELADO'],
+  RECHAZADO: [], // Terminal
+  CANCELADO: [], // Terminal
+};
+
+export function normalizeProviderStatus(s: string): StrictProviderStatus {
+  const upper = (s || '').toUpperCase().trim();
+  if (upper === 'PROPUESTO' || upper === 'PROPOSED' || upper === 'EN EVALUACIÓN' || upper === 'EN EVALUACION') {
+    return 'PROPUESTO';
+  }
+  if (upper === 'SELECCIONADO' || upper === 'SELECTED') {
+    return 'SELECCIONADO';
+  }
+  if (upper === 'CONFIRMADO' || upper === 'CONFIRMED') {
+    return 'CONFIRMADO';
+  }
+  if (upper === 'RECHAZADO' || upper === 'REFUSED') {
+    return 'RECHAZADO';
+  }
+  if (upper === 'CANCELADO' || upper === 'CANCELED' || upper === 'CANCELLED') {
+    return 'CANCELADO';
+  }
+  return 'PROPUESTO';
+}
+
+export function getNextAllowedStatuses(current: string): StrictProviderStatus[] {
+  const normalized = normalizeProviderStatus(current);
+  return ALLOWED_STATUS_TRANSITIONS[normalized] || [];
+}
+
+export function isTerminalStatus(current: string): boolean {
+  const normalized = normalizeProviderStatus(current);
+  return normalized === 'RECHAZADO' || normalized === 'CANCELADO';
+}
+
+export interface QuotationAttachment {
+  name: string;
+  size?: string;
+  type?: string; // 'pdf' | 'image' | 'doc' | string
+  dataUrl?: string;
+  uploadDate?: string;
+}
+
+export interface QuotationExtraFile {
+  id: string;
+  name: string;
+  size: string;
+  type: 'Contrato' | 'Plano técnico' | 'Muestra / Imagen' | 'Adenda' | 'Especificación' | 'Documento' | string;
+  fileFormat?: string;
+  dataUrl?: string;
+  uploadDate: string;
+  uploadedBy?: string;
+  notes?: string;
+}
 
 export interface EventProviderRelation {
   id: string;
@@ -95,15 +179,22 @@ export interface EventProviderRelation {
   email: string;
   phone: string;
   category: ProviderCategory;
+  serviceName?: string;
+  selectedCategories?: string[];
   icon: string;
   iconBg: string;
-  serviceDescription: string;
-  serviceSubtext: string;
+  serviceDescription?: string;
+  serviceSubtext?: string;
+  quotationFile?: QuotationAttachment;
+  quotationNumber?: string;
   status: EventProviderStatus;
   budget: number;
   budgetNote: string;
   paymentStatus: 'Pagado' | 'Parcial' | 'Pendiente';
   internalNotes?: string;
+  extraFiles?: QuotationExtraFile[];
+  createdAt?: string;
+  updatedAt?: string;
 }
 
 export type BudgetStatus = 'Dentro del presupuesto' | 'Cerca del límite' | 'Sobre presupuesto';

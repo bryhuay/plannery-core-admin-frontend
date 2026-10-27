@@ -13,7 +13,7 @@ export default function EventsPage() {
   const [typeFilter, setTypeFilter] = useState('Todos');
   const [plannerFilter, setPlannerFilter] = useState('Todos');
   const [sortBy, setSortBy] = useState('fecha_asc');
-  const [openMenuId, setOpenMenuId] = useState<string | null>('EV-2024-082');
+  const [openMenuId, setOpenMenuId] = useState<string | null>(null);
   const [currentPage, setCurrentPage] = useState(1);
 
   const resetFilters = () => {
@@ -258,11 +258,21 @@ export default function EventsPage() {
                           </span>
                         )}
                       </div>
-                      <div className="text-xs text-slate-500 flex items-center gap-1 mt-0.5">
-                        <span className="material-symbols-outlined text-[13px]">
-                          location_on
+                      <div className="text-xs text-slate-500 flex flex-wrap items-center gap-1.5 mt-0.5">
+                        <span className="flex items-center gap-1">
+                          <span className="material-symbols-outlined text-[13px]">
+                            location_on
+                          </span>
+                          <span>{ev.location}</span>
                         </span>
-                        <span>{ev.location}</span>
+                        {ev.companyName && (
+                          <span className="inline-flex items-center gap-1 px-1.5 py-0.2 rounded text-[10px] font-semibold bg-slate-100 text-slate-700">
+                            <span className="material-symbols-outlined text-[11px] text-slate-500">
+                              domain
+                            </span>
+                            {ev.companyName}
+                          </span>
+                        )}
                       </div>
                     </td>
                     <td className="hidden md:table-cell py-4 px-4">

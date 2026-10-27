@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useRef, useMemo, useEffect } from 'react';
 import { Link, useRouter } from '../../../lib/navigation';
 import { EventType } from '../../../types/planery';
 import { usePlanery } from '../../../context/PlaneryContext';
@@ -11,7 +11,14 @@ import {
 
 export default function CreateEventPage() {
   const router = useRouter();
-  const { clients, planners, addEvent } = usePlanery();
+  const { clients, planners, companies, addEvent } = usePlanery();
+
+  const [selectedCompanyId, setSelectedCompanyId] = useState(
+    companies[0]?.id || 'EMP-2026-0042'
+  );
+  const [companySearchQuery, setCompanySearchQuery] = useState('');
+  const [isCompanyDropdownOpen, setIsCompanyDropdownOpen] = useState(false);
+  const companyDropdownRef = useRef<HTMLDivElement>(null);
 
   const [name, setName] = useState('');
   const [type, setType] = useState<EventType | ''>('');
@@ -28,9 +35,40 @@ export default function CreateEventPage() {
   const [isQuickClientOpen, setIsQuickClientOpen] = useState(false);
   const [isCancelModalOpen, setIsCancelModalOpen] = useState(false);
 
+  // Close company dropdown when clicking outside
+  useEffect(() => {
+    function handleClickOutside(event: MouseEvent) {
+      if (
+        companyDropdownRef.current &&
+        !companyDropdownRef.current.contains(event.target as Node)
+      ) {
+        setIsCompanyDropdownOpen(false);
+      }
+    }
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
+
+  const selectedCompany = useMemo(
+    () => companies.find((c) => c.id === selectedCompanyId),
+    [companies, selectedCompanyId]
+  );
+
+  const filteredCompanies = useMemo(() => {
+    const q = companySearchQuery.trim().toLowerCase();
+    if (!q) return companies;
+    return companies.filter(
+      (c) =>
+        c.commercialName.toLowerCase().includes(q) ||
+        c.legalName.toLowerCase().includes(q) ||
+        c.ruc.toLowerCase().includes(q) ||
+        c.code.toLowerCase().includes(q)
+    );
+  }, [companies, companySearchQuery]);
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!name.trim() || !type || !date || !selectedClientId) {
+    if (!name.trim() || !type || !date || !selectedClientId || !selectedCompanyId) {
       setShowValidationBanner(true);
       return;
     }
@@ -62,6 +100,8 @@ export default function CreateEventPage() {
       budget: parseFloat(budget) || 45000,
       status: 'Planificación',
       description: description.trim(),
+      companyId: selectedCompanyId,
+      companyName: selectedCompany?.commercialName,
     });
 
     router.push(`/eventos/${created.id}`);
@@ -139,6 +179,228 @@ export default function CreateEventPage() {
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-2">
+            {/* EMPRESA ORGANIZADORA / CLIENTE (SELECT SEARCH - VISTA ADMIN) */}
+            <div className="space-y-1.5 md:col-span-2">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1">
+                <label className="block text-xs text-slate-900 font-semibold">
+                  Empresa / Organización organizadora{' '}
+                  <span className="text-rose-600 font-bold">*</span>
+                </label>
+                <div className="flex items-center gap-1.5 text-[11px] font-semibold text-amber-900 bg-amber-50 border border-amber-200/80 px-2 py-0.5 rounded-md self-start sm:self-auto">
+                  <span className="material-symbols-outlined text-[14px] text-amber-700">
+                    shield_person
+                  </span>
+                  <span>Vista Administrador de Plataforma</span>
+                </div>
+              </div>
+
+              {/* Select Search Dropdown Container */}
+              <div className="relative" ref={companyDropdownRef}>
+                {/* Trigger Button */}
+                <div
+                  onClick={() => setIsCompanyDropdownOpen(!isCompanyDropdownOpen)}
+                  role="button"
+                  tabIndex={0}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter' || e.key === ' ') {
+                      e.preventDefault();
+                      setIsCompanyDropdownOpen(!isCompanyDropdownOpen);
+                    }
+                  }}
+                  className={`w-full flex items-center justify-between px-3.5 py-2.5 bg-white border rounded-xl cursor-pointer transition-all ${
+                    isCompanyDropdownOpen
+                      ? 'border-[#F2C94C] ring-2 ring-[#F2C94C]/20 shadow-xs'
+                      : 'border-slate-300 hover:border-slate-400'
+                  }`}
+                >
+                  <div className="flex items-center gap-3 min-w-0">
+                    <div className="w-8 h-8 rounded-lg bg-[#E7EEFE] text-[#745B00] border border-[#DCE2F3] flex items-center justify-center font-bold text-xs shrink-0">
+                      {selectedCompany?.commercialName.slice(0, 2).toUpperCase() || 'EM'}
+                    </div>
+                    <div className="text-left min-w-0">
+                      <div className="text-sm font-semibold text-slate-900 truncate">
+                        {selectedCompany?.commercialName || 'Selecciona una empresa cliente...'}
+                      </div>
+                      <div className="text-xs text-slate-500 font-mono flex items-center gap-1.5 truncate">
+                        {selectedCompany ? (
+                          <>
+                            <span>RUC: {selectedCompany.ruc}</span>
+                            <span>•</span>
+                            <span>Plan {selectedCompany.plan}</span>
+                            <span>•</span>
+                            <span className="text-emerald-700 font-sans font-medium">
+                              {selectedCompany.status}
+                            </span>
+                          </>
+                        ) : (
+                          'Haz clic para buscar en el directorio de empresas'
+                        )}
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="flex items-center gap-2 pl-2 shrink-0">
+                    <span className="text-xs text-slate-400 hidden sm:inline">
+                      {isCompanyDropdownOpen ? 'Buscando...' : 'Cambiar'}
+                    </span>
+                    <span
+                      className={`material-symbols-outlined text-slate-400 text-lg transition-transform duration-200 ${
+                        isCompanyDropdownOpen ? 'rotate-180' : ''
+                      }`}
+                    >
+                      expand_more
+                    </span>
+                  </div>
+                </div>
+
+                {/* Dropdown Menu with Search Input */}
+                {isCompanyDropdownOpen && (
+                  <div className="absolute left-0 right-0 top-full mt-1.5 bg-white border border-slate-200 rounded-xl shadow-xl z-50 overflow-hidden animate-in fade-in zoom-in-95 duration-150">
+                    {/* Search Input Bar */}
+                    <div className="p-2.5 border-b border-slate-100 bg-[#f8f9fa] flex items-center gap-2">
+                      <span className="material-symbols-outlined text-slate-400 text-[18px]">
+                        search
+                      </span>
+                      <input
+                        type="text"
+                        autoFocus
+                        value={companySearchQuery}
+                        onChange={(e) => setCompanySearchQuery(e.target.value)}
+                        placeholder="Buscar por nombre comercial, RUC o razón social..."
+                        className="w-full bg-transparent text-xs text-slate-900 placeholder:text-slate-400 focus:outline-none"
+                        onClick={(e) => e.stopPropagation()}
+                      />
+                      {companySearchQuery && (
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setCompanySearchQuery('');
+                          }}
+                          className="text-slate-400 hover:text-slate-600 p-0.5 rounded cursor-pointer"
+                        >
+                          <span className="material-symbols-outlined text-[16px]">
+                            close
+                          </span>
+                        </button>
+                      )}
+                    </div>
+
+                    {/* List of Companies */}
+                    <div className="max-h-60 overflow-y-auto divide-y divide-slate-100">
+                      {filteredCompanies.length > 0 ? (
+                        filteredCompanies.map((comp) => {
+                          const isSelected = comp.id === selectedCompanyId;
+                          return (
+                            <div
+                              key={comp.id}
+                              onClick={() => {
+                                setSelectedCompanyId(comp.id);
+                                setIsCompanyDropdownOpen(false);
+                                setCompanySearchQuery('');
+                              }}
+                              className={`px-3.5 py-2.5 flex items-center justify-between cursor-pointer transition-colors ${
+                                isSelected
+                                  ? 'bg-[#FEFBF0] hover:bg-[#fef8e3]'
+                                  : 'hover:bg-slate-50'
+                              }`}
+                            >
+                              <div className="flex items-center gap-2.5 min-w-0">
+                                <div
+                                  className={`w-7 h-7 rounded-md flex items-center justify-center font-bold text-[11px] shrink-0 border ${
+                                    isSelected
+                                      ? 'bg-[#F2C94C]/25 text-[#6B5400] border-[#F2C94C]/40'
+                                      : 'bg-slate-100 text-slate-600 border-slate-200'
+                                  }`}
+                                >
+                                  {comp.commercialName.slice(0, 2).toUpperCase()}
+                                </div>
+                                <div className="min-w-0">
+                                  <div className="flex items-center gap-2">
+                                    <span className="text-xs font-bold text-slate-900 truncate">
+                                      {comp.commercialName}
+                                    </span>
+                                    <span className="text-[10px] font-semibold px-1.5 py-0.2 rounded bg-slate-100 text-slate-600 font-mono">
+                                      {comp.code}
+                                    </span>
+                                  </div>
+                                  <div className="text-[11px] text-slate-500 font-mono flex items-center gap-1.5 truncate">
+                                    <span>RUC: {comp.ruc}</span>
+                                    <span>•</span>
+                                    <span className="truncate">{comp.legalName}</span>
+                                  </div>
+                                </div>
+                              </div>
+
+                              <div className="flex items-center gap-2 shrink-0 ml-3">
+                                <span
+                                  className={`text-[10px] font-semibold px-2 py-0.5 rounded-full ${
+                                    comp.status === 'Activa'
+                                      ? 'bg-emerald-50 text-emerald-700 border border-emerald-200'
+                                      : 'bg-amber-50 text-amber-700 border border-amber-200'
+                                  }`}
+                                >
+                                  {comp.plan}
+                                </span>
+                                {isSelected ? (
+                                  <span className="material-symbols-outlined text-[#745B00] text-[18px]">
+                                    check_circle
+                                  </span>
+                                ) : (
+                                  <span className="w-[18px]" />
+                                )}
+                              </div>
+                            </div>
+                          );
+                        })
+                      ) : (
+                        <div className="py-6 px-4 text-center text-xs text-slate-500">
+                          <span className="material-symbols-outlined text-slate-300 text-3xl block mb-1">
+                            domain_disabled
+                          </span>
+                          No se encontraron empresas con &ldquo;{companySearchQuery}&rdquo;
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Dropdown Footer */}
+                    <div className="px-3.5 py-2 bg-slate-50 border-t border-slate-100 flex items-center justify-between text-[11px] text-slate-500">
+                      <span>{filteredCompanies.length} empresas registradas</span>
+                      <span className="text-slate-400">
+                        Selecciona la empresa propietaria
+                      </span>
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              {/* Informative selected tenant card */}
+              {selectedCompany && (
+                <div className="p-3 bg-[#F0F3FF]/70 rounded-xl border border-[#DCE2F3] flex items-center justify-between text-xs">
+                  <div className="flex items-center gap-2.5 min-w-0">
+                    <span className="material-symbols-outlined text-[#745B00] text-[18px] shrink-0">
+                      domain
+                    </span>
+                    <div className="min-w-0 truncate">
+                      <span className="font-semibold text-slate-900">
+                        Tenant:{' '}
+                      </span>
+                      <span className="text-slate-700">
+                        {selectedCompany.commercialName}
+                      </span>{' '}
+                      <span className="text-slate-500 font-mono text-[11px]">
+                        ({selectedCompany.address})
+                      </span>
+                    </div>
+                  </div>
+                  <span className="inline-flex items-center gap-1 text-[11px] bg-emerald-50 text-emerald-700 px-2 py-0.5 rounded-md font-semibold border border-emerald-200 shrink-0">
+                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
+                    Tenant Activo
+                  </span>
+                </div>
+              )}
+            </div>
+
             <div className="space-y-1.5 md:col-span-2">
               <label className="block text-xs text-slate-900 font-semibold">
                 Nombre del evento <span className="text-rose-600 font-bold">*</span>
@@ -409,7 +671,7 @@ export default function CreateEventPage() {
               Por favor completa todos los campos requeridos marcados con (*).
             </p>
             <p className="text-xs mt-0.5">
-              Asegúrate de ingresar un nombre, tipo de evento, fecha válida y
+              Asegúrate de seleccionar una empresa organizadora, ingresar un nombre, tipo de evento, fecha válida y
               asignar un cliente.
             </p>
           </div>

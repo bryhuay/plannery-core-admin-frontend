@@ -93,6 +93,7 @@ export const StatusBadge: React.FC<StatusBadgeProps> = ({
     badgeColors = 'bg-emerald-50 text-emerald-800 border-emerald-200';
     dotColors = 'bg-emerald-500';
   } else if (
+    normalized.includes('propuesto') ||
     normalized.includes('en progreso') ||
     normalized.includes('planificación') ||
     normalized.includes('cerca del límite') ||
@@ -112,7 +113,10 @@ export const StatusBadge: React.FC<StatusBadgeProps> = ({
     badgeColors = 'bg-sky-50 text-sky-800 border-sky-200';
     dotColors = 'bg-sky-500';
   } else if (
+    normalized.includes('rechazado') ||
+    normalized.includes('refused') ||
     normalized.includes('cancelado') ||
+    normalized.includes('canceled') ||
     normalized.includes('sobre presupuesto') ||
     normalized.includes('atrasada') ||
     normalized.includes('alta') ||

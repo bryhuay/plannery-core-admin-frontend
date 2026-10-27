@@ -1,26 +1,42 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Provider } from '../../types/planery';
 import { usePlanery } from '../../context/PlaneryContext';
 import { ProviderDetailDrawer } from '../../components/modals/ProviderDetailDrawer';
 import { ProviderFormDrawer } from '../../components/forms/ProviderFormDrawer';
 
 export default function ProvidersPage() {
-  const { providers, bulkUpdateProvidersStatus, showToast } = usePlanery();
+  const {
+    providers,
+    bulkUpdateProvidersStatus,
+    toggleProviderStatus,
+    showToast,
+  } = usePlanery();
 
   const [searchQuery, setSearchQuery] = useState('');
   const [categoryFilter, setCategoryFilter] = useState('Todas las categorías');
   const [statusFilter, setStatusFilter] = useState('Todos los estados');
-  const [selectedIds, setSelectedIds] = useState<string[]>([
-    'PRV-2024-0012',
-    'PRV-2024-0013',
-  ]);
+  const [selectedIds, setSelectedIds] = useState<string[]>([]);
+  const [openMenuId, setOpenMenuId] = useState<string | null>(null);
   const [inspectedProvider, setInspectedProvider] = useState<Provider | null>(
     null
   );
   const [isFormDrawerOpen, setIsFormDrawerOpen] = useState(false);
   const [editingProvider, setEditingProvider] = useState<Provider | null>(null);
+
+  useEffect(() => {
+    const handleClose = () => setOpenMenuId(null);
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') setOpenMenuId(null);
+    };
+    window.addEventListener('click', handleClose);
+    window.addEventListener('keydown', handleKeyDown);
+    return () => {
+      window.removeEventListener('click', handleClose);
+      window.removeEventListener('keydown', handleKeyDown);
+    };
+  }, []);
 
   const filteredProviders = providers.filter((p) => {
     const matchSearch =
@@ -28,10 +44,16 @@ export default function ProvidersPage() {
       p.commercialName.toLowerCase().includes(searchQuery.toLowerCase()) ||
       p.legalName.toLowerCase().includes(searchQuery.toLowerCase()) ||
       p.ruc.includes(searchQuery) ||
-      p.contactName.toLowerCase().includes(searchQuery.toLowerCase());
+      p.contactName.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      (p.companyName &&
+        p.companyName.toLowerCase().includes(searchQuery.toLowerCase()));
     const matchCategory =
       categoryFilter === 'Todas las categorías' ||
-      p.category.toLowerCase().includes(categoryFilter.toLowerCase());
+      p.category.toLowerCase().includes(categoryFilter.toLowerCase()) ||
+      (p.categories &&
+        p.categories.some((c) =>
+          c.toLowerCase().includes(categoryFilter.toLowerCase())
+        ));
     const matchStatus =
       statusFilter === 'Todos los estados' || p.status === statusFilter;
     return matchSearch && matchCategory && matchStatus;
@@ -204,7 +226,7 @@ export default function ProvidersPage() {
       )}
 
       {/* Card Principal: Toolbar + Tabla de Proveedores */}
-      <div className="bg-white border border-slate-200 rounded-xl overflow-hidden shadow-xs">
+      <div className="bg-white border border-slate-200 rounded-xl overflow-visible shadow-xs">
         {/* Toolbar */}
         <div className="p-4 border-b border-slate-200 flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 bg-white">
           <div className="relative flex-1 sm:max-w-md">
@@ -263,7 +285,7 @@ export default function ProvidersPage() {
         </div>
 
         {/* Tabla Avanzada */}
-        <div className="w-full overflow-x-auto">
+        <div className="w-full overflow-x-auto overflow-y-visible">
           <table className="w-full text-left border-collapse text-sm">
             <thead>
               <tr className="bg-[#f0f3ff]/70 border-b border-slate-200 text-slate-500 text-xs font-bold uppercase tracking-wider select-none">
@@ -288,8 +310,12 @@ export default function ProvidersPage() {
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-200 text-slate-900">
-              {filteredProviders.map((prov) => {
+              {filteredProviders.map((prov, index) => {
                 const isSelected = selectedIds.includes(prov.id);
+                const isMenuOpen = openMenuId === prov.id;
+                const isNearBottom =
+                  index >= filteredProviders.length - 2 &&
+                  filteredProviders.length > 2;
                 return (
                   <tr
                     key={prov.id}
@@ -327,16 +353,40 @@ export default function ProvidersPage() {
                               </span>
                             )}
                           </div>
-                          <div className="text-xs text-slate-500">
-                            {prov.legalName} · RUC {prov.ruc}
+                          <div className="text-xs text-slate-500 flex flex-wrap items-center gap-1.5 mt-0.5">
+                            {prov.companyName && (
+                              <>
+                                <span className="text-slate-700 font-medium">
+                                  {prov.companyName}
+                                </span>
+                                <span>·</span>
+                              </>
+                            )}
+                            <span>{prov.legalName}</span>
+                            <span>·</span>
+                            <span className="font-mono">RUC {prov.ruc}</span>
                           </div>
                         </div>
                       </div>
                     </td>
                     <td className="py-3.5 px-4">
-                      <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-orange-50 text-orange-800 border border-orange-200">
-                        {prov.category}
-                      </span>
+                      <div className="flex flex-wrap gap-1 max-w-[220px]">
+                        {(prov.categories && prov.categories.length > 0
+                          ? prov.categories
+                          : [prov.category]
+                        ).map((cat, idx) => (
+                          <span
+                            key={idx}
+                            className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium border ${
+                              idx === 0
+                                ? 'bg-amber-50 text-amber-900 border-amber-200'
+                                : 'bg-slate-100 text-slate-700 border-slate-200'
+                            }`}
+                          >
+                            {cat}
+                          </span>
+                        ))}
+                      </div>
                     </td>
                     <td className="hidden md:table-cell py-3.5 px-4">
                       <div className="font-medium text-slate-900">
@@ -372,22 +422,110 @@ export default function ProvidersPage() {
                       {prov.registeredDate}
                     </td>
                     <td
-                      className="py-3.5 px-4 text-right"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        setEditingProvider(prov);
-                        setIsFormDrawerOpen(true);
-                      }}
+                      className="py-3.5 px-4 text-right relative"
+                      onClick={(e) => e.stopPropagation()}
                     >
-                      <button
-                        type="button"
-                        title="Editar proveedor"
-                        className="p-1 rounded hover:bg-[#e2e8f8] text-slate-500 hover:text-slate-900 transition-colors cursor-pointer"
-                      >
-                        <span className="material-symbols-outlined text-lg">
-                          more_vert
-                        </span>
-                      </button>
+                      <div className="inline-block relative text-left">
+                        <button
+                          type="button"
+                          title="Opciones del proveedor"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setOpenMenuId(isMenuOpen ? null : prov.id);
+                          }}
+                          className={`p-1.5 rounded-lg transition-colors cursor-pointer ${
+                            isMenuOpen
+                              ? 'bg-[#e2e8f8] text-slate-900 shadow-xs ring-1 ring-slate-300'
+                              : 'hover:bg-[#e2e8f8] text-slate-500 hover:text-slate-900'
+                          }`}
+                        >
+                          <span className="material-symbols-outlined text-lg">
+                            more_vert
+                          </span>
+                        </button>
+
+                        {isMenuOpen && (
+                          <div
+                            className={`absolute right-0 ${
+                              isNearBottom ? 'bottom-full mb-1' : 'top-full mt-1'
+                            } w-52 bg-white rounded-xl shadow-xl border border-slate-200 py-1.5 z-40 text-left`}
+                            onClick={(e) => e.stopPropagation()}
+                          >
+                            <div className="px-3.5 py-1.5 border-b border-slate-100 text-[10px] font-bold text-slate-400 uppercase tracking-wider">
+                              Acciones de proveedor
+                            </div>
+
+                            <button
+                              type="button"
+                              onClick={() => {
+                                setOpenMenuId(null);
+                                setInspectedProvider(prov);
+                              }}
+                              className="w-full flex items-center gap-2.5 px-3.5 py-2 text-xs font-medium text-slate-700 hover:bg-[#f0f3ff] hover:text-slate-900 transition-colors cursor-pointer"
+                            >
+                              <span className="material-symbols-outlined text-[18px] text-slate-500">
+                                visibility
+                              </span>
+                              <span>Ver detalle</span>
+                            </button>
+
+                            <button
+                              type="button"
+                              onClick={() => {
+                                setOpenMenuId(null);
+                                setEditingProvider(prov);
+                                setIsFormDrawerOpen(true);
+                              }}
+                              className="w-full flex items-center gap-2.5 px-3.5 py-2 text-xs font-medium text-slate-700 hover:bg-[#f0f3ff] hover:text-slate-900 transition-colors cursor-pointer"
+                            >
+                              <span className="material-symbols-outlined text-[18px] text-slate-500">
+                                edit
+                              </span>
+                              <span>Editar proveedor</span>
+                            </button>
+
+                            <div className="my-1 border-t border-slate-100" />
+
+                            {prov.status === 'Activo' ? (
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  setOpenMenuId(null);
+                                  toggleProviderStatus(prov.id, 'Inactivo');
+                                  showToast(
+                                    `Proveedor "${prov.commercialName}" desactivado con éxito.`,
+                                    'warning'
+                                  );
+                                }}
+                                className="w-full flex items-center gap-2.5 px-3.5 py-2 text-xs font-medium text-rose-600 hover:bg-rose-50 transition-colors cursor-pointer"
+                              >
+                                <span className="material-symbols-outlined text-[18px] text-rose-500">
+                                  block
+                                </span>
+                                <span>Desactivar proveedor</span>
+                              </button>
+                            ) : (
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  setOpenMenuId(null);
+                                  toggleProviderStatus(prov.id, 'Activo');
+                                  showToast(
+                                    `Proveedor "${prov.commercialName}" activado con éxito.`,
+                                    'success'
+                                  );
+                                }}
+                                className="w-full flex items-center gap-2.5 px-3.5 py-2 text-xs font-medium text-emerald-600 hover:bg-emerald-50 transition-colors cursor-pointer"
+                              >
+                                <span className="material-symbols-outlined text-[18px] text-emerald-600">
+                                  check_circle
+                                </span>
+                                <span>Activar proveedor</span>
+                              </button>
+                            )}
+                          </div>
+                        )}
+                      </div>
                     </td>
                   </tr>
                 );

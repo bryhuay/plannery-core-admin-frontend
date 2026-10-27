@@ -23,6 +23,7 @@ import {
   PlatformCompanyStatus,
   GlobalCatalogItem,
   NotificationItem,
+  QuotationExtraFile,
 } from '../types/planery';
 
 interface ToastState {
@@ -64,8 +65,12 @@ interface PlaneryContextValue {
   toggleProviderStatus: (id: string, forceStatus?: 'Activo' | 'Inactivo') => void;
   bulkUpdateProvidersStatus: (ids: string[], status: 'Activo' | 'Inactivo') => void;
   linkProviderToEvent: (relation: Omit<EventProviderRelation, 'id'>) => void;
+  linkMultipleServicesToEvent: (relations: Omit<EventProviderRelation, 'id'>[]) => void;
   removeProviderFromEvent: (relationId: string) => void;
+  updateEventProviderRelation: (relationId: string, updates: Partial<EventProviderRelation>) => void;
   updateEventProviderStatus: (relationId: string, status: EventProviderRelation['status']) => void;
+  addExtraFileToQuotation: (relationId: string, extraFile: Omit<QuotationExtraFile, 'id'>) => void;
+  removeExtraFileFromQuotation: (relationId: string, fileId: string) => void;
   addBudgetCategory: (cat: Omit<BudgetCategory, 'id'>) => void;
   updateBudgetCategory: (id: string, allocated: number, notes?: string) => void;
   registerPayment: (payment: Omit<PaymentItem, 'id'>) => void;
@@ -156,6 +161,8 @@ const INITIAL_EVENTS: EventItem[] = [
     committedAmount: 30500,
     status: 'Planificación',
     description: 'Boda civil y religiosa para 180 invitados con banquete de 4 tiempos, coctelería de autor y música en vivo.',
+    companyId: 'EMP-2026-0042',
+    companyName: 'Bodas & Galas Perú S.A.C.',
   },
   {
     id: 'EV-2024-081',
@@ -180,6 +187,8 @@ const INITIAL_EVENTS: EventItem[] = [
     committedAmount: 38000,
     status: 'En progreso',
     description: 'Cena anual de premiación para directivos y partners estratégicos de Tech Innovations Corp.',
+    companyId: 'EMP-2026-0043',
+    companyName: 'Eventos & Producciones Lima E.I.R.L.',
   },
   {
     id: 'EV-2024-082',
@@ -204,6 +213,8 @@ const INITIAL_EVENTS: EventItem[] = [
     committedAmount: 82000,
     status: 'Confirmado',
     description: 'Cumbre financiera regional con más de 450 participantes y transmisión simultánea.',
+    companyId: 'EMP-2026-0044',
+    companyName: 'Catering & Protocolo del Sur',
   },
   {
     id: 'EV-2024-083',
@@ -228,6 +239,8 @@ const INITIAL_EVENTS: EventItem[] = [
     committedAmount: 29000,
     status: 'Planificación',
     description: 'Ceremonia al aire libre y recepción para 220 invitados.',
+    companyId: 'EMP-2026-0042',
+    companyName: 'Bodas & Galas Perú S.A.C.',
   },
   {
     id: 'EV-2025-085',
@@ -248,6 +261,8 @@ const INITIAL_EVENTS: EventItem[] = [
     paidAmount: 52000,
     committedAmount: 88000,
     status: 'En progreso',
+    companyId: 'EMP-2026-0043',
+    companyName: 'Eventos & Producciones Lima E.I.R.L.',
   },
   {
     id: 'EV-2025-086',
@@ -299,6 +314,9 @@ const INITIAL_PROVIDERS: Provider[] = [
     legalName: 'Del Sur Banquetes S.A.C.',
     ruc: '20601928371',
     category: 'Catering',
+    categories: ['Catering', 'Transporte', 'Audio e Iluminación'],
+    companyId: 'EMP-2026-0042',
+    companyName: 'Bodas & Galas Perú S.A.C.',
     description: 'Servicio integral de banquetería gourmet, bocaditos de autor y estaciones en vivo para bodas y galas corporativas.',
     contactName: 'Roberto Valdivia',
     phone: '+51 958 221 443',
@@ -320,6 +338,9 @@ const INITIAL_PROVIDERS: Provider[] = [
     legalName: 'Visual Studio Fotografía E.I.R.L.',
     ruc: '10459203912',
     category: 'Fotografía',
+    categories: ['Fotografía', 'Audio e Iluminación'],
+    companyId: 'EMP-2026-0042',
+    companyName: 'Bodas & Galas Perú S.A.C.',
     description: 'Cobertura fotográfica documental, cine de bodas 4K, tomas aéreas con drone y álbumes editoriales.',
     contactName: 'Andrea Morales',
     phone: '+51 984 110 998',
@@ -340,6 +361,9 @@ const INITIAL_PROVIDERS: Provider[] = [
     legalName: 'Flores & Diseños Perú S.A.',
     ruc: '20491029341',
     category: 'Decoración',
+    categories: ['Decoración', 'Audio e Iluminación'],
+    companyId: 'EMP-2026-0043',
+    companyName: 'Eventos & Producciones Lima E.I.R.L.',
     description: 'Diseño floral de alto impacto, estructuras aéreas, mobiliario lounge y ambientación temática.',
     contactName: 'Lucía Gómez',
     phone: '+51 954 876 123',
@@ -359,6 +383,9 @@ const INITIAL_PROVIDERS: Provider[] = [
     legalName: 'Andino Pro Eventos S.A.C.',
     ruc: '20455891024',
     category: 'Música & Sonido',
+    categories: ['Música & Sonido', 'Audio e Iluminación'],
+    companyId: 'EMP-2026-0043',
+    companyName: 'Eventos & Producciones Lima E.I.R.L.',
     description: 'Sistemas line-array, consolas digitales, cabezas móviles beam y pantallas LED de alta resolución.',
     contactName: 'Jorge Quispe',
     phone: '+51 984 112 900',
@@ -378,6 +405,9 @@ const INITIAL_PROVIDERS: Provider[] = [
     legalName: 'Inversiones Rústicas S.A.',
     ruc: '20556781290',
     category: 'Venue / Locación',
+    categories: ['Venue / Locación'],
+    companyId: 'EMP-2026-0042',
+    companyName: 'Bodas & Galas Perú S.A.C.',
     description: 'Casona histórica y jardines de 4,000 m² con capilla privada y estacionamiento para 120 vehículos.',
     contactName: 'Camila Benavides',
     phone: '+51 977 443 219',
@@ -397,6 +427,9 @@ const INITIAL_PROVIDERS: Provider[] = [
     legalName: 'LogiTrans Perú S.A.C.',
     ruc: '20100492811',
     category: 'Transporte',
+    categories: ['Transporte'],
+    companyId: 'EMP-2026-0044',
+    companyName: 'Catering & Protocolo del Sur',
     description: 'Flota de vans ejecutivas Mercedes-Benz Sprinter y buses turísticos para traslado seguro de invitados.',
     contactName: 'Fernando Silva',
     phone: '+51 940 332 109',
@@ -416,6 +449,9 @@ const INITIAL_PROVIDERS: Provider[] = [
     legalName: 'Sabor Real Producciones S.A.C.',
     ruc: '10839201948',
     category: 'Música & Sonido',
+    categories: ['Música & Sonido'],
+    companyId: 'EMP-2026-0042',
+    companyName: 'Bodas & Galas Perú S.A.C.',
     description: 'Orquesta digital de 12 músicos en escena y DJ residente especializado en bodas y eventos corporativos.',
     contactName: 'Marco Díaz',
     phone: '+51 987 654 321',
@@ -435,6 +471,9 @@ const INITIAL_PROVIDERS: Provider[] = [
     legalName: 'Dulce Arte Boutique S.A.C.',
     ruc: '20549281921',
     category: 'Catering',
+    categories: ['Catering', 'Decoración'],
+    companyId: 'EMP-2026-0044',
+    companyName: 'Catering & Protocolo del Sur',
     description: 'Tortas nupciales escultóricas y mesas de postres de vanguardia con insumos importados.',
     contactName: 'Elena Pinto',
     phone: '+51 954 112 334',
@@ -451,21 +490,89 @@ const INITIAL_PROVIDERS: Provider[] = [
 
 const INITIAL_EVENT_PROVIDERS: EventProviderRelation[] = [
   {
-    id: 'EPR-01',
+    id: 'EPR-01a',
     eventId: 'EV-2026-084',
     providerId: 'PRV-2024-0012',
     providerName: 'Catering Gourmet Del Sur',
     email: 'contacto@gourmetdelsur.pe',
     phone: '+51 958 221 443',
     category: 'Catering',
+    serviceName: 'Catering Gourmet',
+    selectedCategories: ['Catering'],
     icon: 'restaurant',
     iconBg: 'bg-amber-50 text-amber-800 border-amber-200/60',
-    serviceDescription: 'Banquete 3 tiempos (180 pax) + Estación de cócteles',
-    serviceSubtext: 'Incluye menajería y personal',
-    status: 'Confirmado',
-    budget: 18500,
-    budgetNote: 'Contrato firmado',
+    serviceDescription: 'Catering Gourmet',
+    serviceSubtext: 'Banquete 3 tiempos (180 pax) y barra de cócteles',
+    quotationFile: {
+      name: 'Cotizacion_Catering_Banquete_180pax.pdf',
+      size: '1.8 MB',
+      type: 'application/pdf',
+      uploadDate: '10 Oct 2026',
+    },
+    quotationNumber: 'COT-2026-0814',
+    status: 'CONFIRMADO',
+    budget: 16000,
+    budgetNote: 'Contrato firmado con menajería',
     paymentStatus: 'Pagado',
+    internalNotes: 'Menú degustado y aprobado por los novios. Vajilla y mozos incluidos.',
+    extraFiles: [
+      {
+        id: 'EF-01',
+        name: 'Contrato_Catering_Firmado_Nov2026.pdf',
+        size: '2.1 MB',
+        type: 'Contrato',
+        uploadDate: '12 Oct 2026',
+        uploadedBy: 'Jerson Huayta',
+        notes: 'Firmado con cláusula de garantía de frescura e insumos A1',
+      },
+      {
+        id: 'EF-02',
+        name: 'Plano_Distribucion_Mesas_Buffet.pdf',
+        size: '1.4 MB',
+        type: 'Plano técnico',
+        uploadDate: '14 Oct 2026',
+        uploadedBy: 'Jerson Huayta',
+        notes: 'Montaje de 18 mesas redondas + mesa de postres',
+      },
+    ],
+  },
+  {
+    id: 'EPR-01b',
+    eventId: 'EV-2026-084',
+    providerId: 'PRV-2024-0012',
+    providerName: 'Catering Gourmet Del Sur',
+    email: 'contacto@gourmetdelsur.pe',
+    phone: '+51 958 221 443',
+    category: 'Transporte',
+    serviceName: 'Transporte Logístico',
+    selectedCategories: ['Transporte'],
+    icon: 'airport_shuttle',
+    iconBg: 'bg-slate-100 text-slate-800 border-slate-200',
+    serviceDescription: 'Transporte Logístico',
+    serviceSubtext: 'Traslado refrigerado de insumos, vajilla y cristalería',
+    quotationFile: {
+      name: 'Cotizacion_Transporte_Refrigerado.pdf',
+      size: '840 KB',
+      type: 'application/pdf',
+      uploadDate: '11 Oct 2026',
+    },
+    quotationNumber: 'COT-2026-0815',
+    status: 'CONFIRMADO',
+    budget: 2500,
+    budgetNote: 'Ruta Arequipa - Sachaca',
+    paymentStatus: 'Pagado',
+    internalNotes: 'Furgón isotérmico autorizado para transporte de alimentos.',
+    extraFiles: [
+      {
+        id: 'EF-03',
+        name: 'Guia_Remision_Vehiculo_Logistico.pdf',
+        size: '650 KB',
+        type: 'Documento',
+        uploadDate: '15 Oct 2026',
+        uploadedBy: 'Jerson Huayta',
+        notes: 'Permiso y SOAT de transporte de carga',
+      },
+    ],
   },
   {
     id: 'EPR-02',
@@ -475,14 +582,34 @@ const INITIAL_EVENT_PROVIDERS: EventProviderRelation[] = [
     email: 'produccion@visualstudioaqp.com',
     phone: '+51 984 110 998',
     category: 'Fotografía',
+    serviceName: 'Fotografía y Video Cinematic',
+    selectedCategories: ['Fotografía'],
     icon: 'photo_camera',
     iconBg: 'bg-blue-50 text-blue-700 border-blue-200/60',
-    serviceDescription: 'Cobertura completa 10h + Video 4K Drone',
-    serviceSubtext: '2 cámaras principales',
-    status: 'Seleccionado',
+    serviceDescription: 'Fotografía',
+    serviceSubtext: 'Cobertura completa 10h + Video 4K Drone y resumen Reels',
+    quotationFile: {
+      name: 'Presupuesto_Visual_Studio_Drone4K.pdf',
+      size: '2.4 MB',
+      type: 'application/pdf',
+      uploadDate: '14 Oct 2026',
+    },
+    quotationNumber: 'COT-2026-0922',
+    status: 'SELECCIONADO',
     budget: 4800,
-    budgetNote: 'Adelanto requerido: 30%',
+    budgetNote: 'Adelanto 30% requerido',
     paymentStatus: 'Pendiente',
+    internalNotes: 'Entregables: Álbum impreso de lujo + galería en la nube para invitados.',
+    extraFiles: [
+      {
+        id: 'EF-04',
+        name: 'Muestras_Portafolio_Cinematic.pdf',
+        size: '3.6 MB',
+        type: 'Muestra / Imagen',
+        uploadDate: '16 Oct 2026',
+        uploadedBy: 'Jerson Huayta',
+      },
+    ],
   },
   {
     id: 'EPR-03',
@@ -492,31 +619,81 @@ const INITIAL_EVENT_PROVIDERS: EventProviderRelation[] = [
     email: 'contacto@floresyambientes.com',
     phone: '+51 954 876 123',
     category: 'Decoración',
+    serviceName: 'Decoración Floral Integral',
+    selectedCategories: ['Decoración'],
     icon: 'local_florist',
     iconBg: 'bg-pink-50 text-pink-700 border-pink-200/60',
-    serviceDescription: 'Arreglos florales ceremonia y mesas',
-    serviceSubtext: 'Incluye estructura y desmontaje',
-    status: 'En evaluación',
+    serviceDescription: 'Decoración Floral',
+    serviceSubtext: 'Arreglos florales ceremonia religiosa y mesas lounge estilo botánico',
+    quotationFile: {
+      name: 'Diseno_Floral_y_Ambientacion_v2.png',
+      size: '3.1 MB',
+      type: 'image/png',
+      uploadDate: '18 Oct 2026',
+    },
+    quotationNumber: 'COT-2026-1045',
+    status: 'PROPUESTO',
     budget: 7200,
     budgetNote: 'Propuesta v2 recibida',
     paymentStatus: 'Pendiente',
+    internalNotes: 'Se evalúa paleta floral blanco marfil y eucalipto preservado.',
+    extraFiles: [],
   },
   {
-    id: 'EPR-04',
+    id: 'EPR-04a',
     eventId: 'EV-2026-084',
     providerId: 'PRV-2024-0018',
     providerName: 'DJ & Orquesta Sabor Real',
     email: 'eventos@saborreal.pe',
     phone: '+51 987 654 321',
     category: 'Música & Sonido',
+    serviceName: 'Música & DJ Show',
+    selectedCategories: ['Música & Sonido'],
     icon: 'music_note',
     iconBg: 'bg-purple-50 text-purple-700 border-purple-200/60',
-    serviceDescription: 'DJ en vivo 6 horas + Luces inteligentes',
-    serviceSubtext: 'Sonido lineal line-array',
-    status: 'Propuesto',
-    budget: 0,
-    budgetNote: 'Esperando cotización',
+    serviceDescription: 'Música & Sonido',
+    serviceSubtext: 'DJ en vivo 6 horas + cabina personalizada y microfonía',
+    quotationFile: {
+      name: 'Cotizacion_DJ_Show_6Horas.pdf',
+      size: '1.2 MB',
+      type: 'application/pdf',
+      uploadDate: '20 Oct 2026',
+    },
+    quotationNumber: 'COT-2026-1102',
+    status: 'PROPUESTO',
+    budget: 3500,
+    budgetNote: 'Esperando validación de playlist',
     paymentStatus: 'Pendiente',
+    internalNotes: 'Reunión de briefing musical programada para la próxima semana.',
+    extraFiles: [],
+  },
+  {
+    id: 'EPR-04b',
+    eventId: 'EV-2026-084',
+    providerId: 'PRV-2024-0018',
+    providerName: 'DJ & Orquesta Sabor Real',
+    email: 'eventos@saborreal.pe',
+    phone: '+51 987 654 321',
+    category: 'Audio e Iluminación',
+    serviceName: 'Audio Line-Array e Iluminación Robótica',
+    selectedCategories: ['Audio e Iluminación'],
+    icon: 'tune',
+    iconBg: 'bg-indigo-50 text-indigo-700 border-indigo-200/60',
+    serviceDescription: 'Audio e Iluminación',
+    serviceSubtext: 'Sistema line-array, cabezales móviles y luces perimetrales',
+    quotationFile: {
+      name: 'Cotizacion_Audio_LineArray_Luces.pdf',
+      size: '1.5 MB',
+      type: 'application/pdf',
+      uploadDate: '20 Oct 2026',
+    },
+    quotationNumber: 'COT-2026-1103',
+    status: 'PROPUESTO',
+    budget: 2200,
+    budgetNote: 'Montaje técnico 4 horas antes',
+    paymentStatus: 'Pendiente',
+    internalNotes: 'Requiere acometida eléctrica de 32A en locación.',
+    extraFiles: [],
   },
 ];
 
@@ -2129,9 +2306,26 @@ export function PlaneryProvider({ children }: { children: React.ReactNode }) {
       const created: EventProviderRelation = {
         ...relationData,
         id: `EPR-${Date.now()}`,
+        extraFiles: relationData.extraFiles || [],
       };
       setEventProviders((prev) => [created, ...prev]);
-      showToast('Proveedor agregado exitosamente al evento.');
+      showToast('Proveedor y servicio agregado exitosamente al evento.');
+    },
+    [showToast]
+  );
+
+  const linkMultipleServicesToEvent = useCallback(
+    (relations: Omit<EventProviderRelation, 'id'>[]) => {
+      const baseTime = Date.now();
+      const createdItems: EventProviderRelation[] = relations.map((rel, index) => ({
+        ...rel,
+        id: `EPR-${baseTime}-${index + 1}`,
+        extraFiles: rel.extraFiles || [],
+      }));
+      setEventProviders((prev) => [...createdItems, ...prev]);
+      showToast(
+        `${createdItems.length} servicio(s) con cotizaciones independientes vinculados al evento.`
+      );
     },
     [showToast]
   );
@@ -2139,7 +2333,21 @@ export function PlaneryProvider({ children }: { children: React.ReactNode }) {
   const removeProviderFromEvent = useCallback(
     (relationId: string) => {
       setEventProviders((prev) => prev.filter((r) => r.id !== relationId));
-      showToast('Proveedor desvinculado del evento.', 'warning');
+      showToast('Servicio y cotización desvinculados del evento.', 'warning');
+    },
+    [showToast]
+  );
+
+  const updateEventProviderRelation = useCallback(
+    (relationId: string, updates: Partial<EventProviderRelation>) => {
+      setEventProviders((prev) =>
+        prev.map((r) =>
+          r.id === relationId
+            ? { ...r, ...updates, updatedAt: new Date().toISOString() }
+            : r
+        )
+      );
+      showToast('Cotización y datos del servicio actualizados exitosamente.');
     },
     [showToast]
   );
@@ -2149,7 +2357,47 @@ export function PlaneryProvider({ children }: { children: React.ReactNode }) {
       setEventProviders((prev) =>
         prev.map((r) => (r.id === relationId ? { ...r, status } : r))
       );
-      showToast(`Estado de relación actualizado a "${status}".`);
+      showToast(`Estado de cotización actualizado a "${status}".`);
+    },
+    [showToast]
+  );
+
+  const addExtraFileToQuotation = useCallback(
+    (relationId: string, extraFile: Omit<QuotationExtraFile, 'id'>) => {
+      const fileId = `EF-${Date.now()}`;
+      const newFile: QuotationExtraFile = {
+        ...extraFile,
+        id: fileId,
+      };
+      setEventProviders((prev) =>
+        prev.map((r) => {
+          if (r.id !== relationId) return r;
+          const currentExtras = r.extraFiles || [];
+          return {
+            ...r,
+            extraFiles: [newFile, ...currentExtras],
+            updatedAt: new Date().toISOString(),
+          };
+        })
+      );
+      showToast(`Archivo complementario "${newFile.name}" agregado a la cotización.`);
+    },
+    [showToast]
+  );
+
+  const removeExtraFileFromQuotation = useCallback(
+    (relationId: string, fileId: string) => {
+      setEventProviders((prev) =>
+        prev.map((r) => {
+          if (r.id !== relationId) return r;
+          return {
+            ...r,
+            extraFiles: (r.extraFiles || []).filter((f) => f.id !== fileId),
+            updatedAt: new Date().toISOString(),
+          };
+        })
+      );
+      showToast('Archivo complementario eliminado de la cotización.', 'warning');
     },
     [showToast]
   );
@@ -2418,17 +2666,20 @@ export function PlaneryProvider({ children }: { children: React.ReactNode }) {
       activateImmediately: boolean;
     }) => {
       const comp = companies.find((c) => c.id === userData.companyId);
-      const companyName =
-        userData.companyId === 'plataforma'
-          ? 'Plataforma'
-          : comp
-          ? comp.commercialName
-          : 'Bodas & Galas Perú S.A.C.';
-      const companyRuc = comp ? comp.ruc : '20608912345';
-      const companySubtext =
-        userData.companyId === 'plataforma'
-          ? 'Usuario de infraestructura'
-          : `RUC: ${companyRuc}`;
+      const isPlatform = userData.companyId === 'plataforma';
+      const companyName = isPlatform
+        ? 'Plataforma'
+        : comp
+        ? comp.commercialName
+        : 'Bodas & Galas Perú S.A.C.';
+      const companyRuc = isPlatform
+        ? '20600000001'
+        : comp
+        ? comp.ruc
+        : '20608912345';
+      const companySubtext = isPlatform
+        ? 'Usuario de infraestructura'
+        : `RUC: ${companyRuc}`;
       const initials = `${userData.firstName.charAt(0)}${userData.lastName.charAt(0)}`.toUpperCase();
       const status: PlatformUserStatus = userData.activateImmediately
         ? 'Activo'
@@ -2441,7 +2692,9 @@ export function PlaneryProvider({ children }: { children: React.ReactNode }) {
         fullName: `${userData.firstName} ${userData.lastName.split(' ')[0]}`,
         initials,
         avatarColor:
-          userData.role === 'Company Admin'
+          userData.role === 'Super Admin'
+            ? 'bg-[#1E222D] text-[#F2C94C] border-gray-700'
+            : userData.role === 'Company Admin'
             ? 'bg-blue-100 text-blue-700 border-blue-200'
             : userData.role === 'Planner'
             ? 'bg-purple-100 text-purple-700 border-purple-200'
@@ -2452,13 +2705,15 @@ export function PlaneryProvider({ children }: { children: React.ReactNode }) {
         companyName,
         companySubtext,
         companyRuc,
-        companyInitials: companyName.slice(0, 2).toUpperCase(),
+        companyInitials: isPlatform ? 'PC' : companyName.slice(0, 2).toUpperCase(),
         role: userData.role,
         status,
         lastAccess: userData.activateImmediately ? 'Hoy, Ahora' : 'Sin acceso',
         lastAccessIp: userData.activateImmediately ? '190.237.45.12' : '—',
         registeredDate: '28 Sep 2026',
         registeredDateLong: '28 de Septiembre de 2026',
+        isSystemProtected: userData.role === 'Super Admin',
+        verifiedBadge: userData.role === 'Super Admin',
         accessLogs: [
           {
             id: `al-${Date.now()}`,
@@ -2748,8 +3003,12 @@ export function PlaneryProvider({ children }: { children: React.ReactNode }) {
         toggleProviderStatus,
         bulkUpdateProvidersStatus,
         linkProviderToEvent,
+        linkMultipleServicesToEvent,
         removeProviderFromEvent,
+        updateEventProviderRelation,
         updateEventProviderStatus,
+        addExtraFileToQuotation,
+        removeExtraFileFromQuotation,
         addBudgetCategory,
         updateBudgetCategory,
         registerPayment,

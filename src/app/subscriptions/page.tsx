@@ -19,9 +19,8 @@ export default function SubscriptionsPage() {
   const [cycleFilter, setCycleFilter] = useState('Todas las periodicidades');
 
   // Store ID instead of static snapshot so live edits reflect immediately
-  const [selectedSubId, setSelectedSubId] = useState<string | null>(
-    subscriptions[0]?.id || null
-  );
+  const [selectedSubId, setSelectedSubId] = useState<string | null>(null);
+  const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const [subForPlanModalId, setSubForPlanModalId] = useState<string | null>(
     null
   );
@@ -291,6 +290,17 @@ export default function SubscriptionsPage() {
                 <th className="py-4 px-4 w-12 text-center">
                   <input
                     type="checkbox"
+                    checked={
+                      filtered.length > 0 &&
+                      selectedIds.length === filtered.length
+                    }
+                    onChange={() => {
+                      if (selectedIds.length === filtered.length) {
+                        setSelectedIds([]);
+                      } else {
+                        setSelectedIds(filtered.map((s) => s.id));
+                      }
+                    }}
                     className="rounded border-slate-300 text-[#745b00]"
                   />
                 </th>
@@ -306,7 +316,9 @@ export default function SubscriptionsPage() {
             </thead>
             <tbody className="divide-y divide-slate-200 text-sm text-slate-900 tabular-nums">
               {filtered.map((sub) => {
-                const isSelected = selectedSubId === sub.id;
+                const isSelected =
+                  selectedIds.includes(sub.id) || selectedSubId === sub.id;
+                const isChecked = selectedIds.includes(sub.id);
                 const rejectedInvoicesCount = sub.invoices.filter(
                   (i) => i.status === 'Rechazado'
                 ).length;
@@ -327,8 +339,14 @@ export default function SubscriptionsPage() {
                     >
                       <input
                         type="checkbox"
-                        checked={isSelected}
-                        onChange={() => setSelectedSubId(sub.id)}
+                        checked={isChecked}
+                        onChange={() =>
+                          setSelectedIds((prev) =>
+                            prev.includes(sub.id)
+                              ? prev.filter((id) => id !== sub.id)
+                              : [...prev, sub.id]
+                          )
+                        }
                         className="rounded border-slate-300 text-[#745b00]"
                       />
                     </td>

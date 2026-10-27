@@ -14,7 +14,7 @@ export default function CompaniesPage() {
   const [dateFilter, setDateFilter] = useState('Cualquier fecha');
   const [planFilter, setPlanFilter] = useState('Todos los planes');
   const [sortBy, setSortBy] = useState('Más recientes');
-  const [selectedIds, setSelectedIds] = useState<string[]>(['EMP-2026-0042']);
+  const [selectedIds, setSelectedIds] = useState<string[]>([]);
 
   // Drawer & Modal states
   const [drawerCompanyId, setDrawerCompanyId] = useState<string | null>(null);

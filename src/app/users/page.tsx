@@ -21,7 +21,7 @@ export default function UsersPage() {
   const [roleFilter, setRoleFilter] = useState('');
   const [statusFilter, setStatusFilter] = useState('');
   const [sortBy, setSortBy] = useState('recientes');
-  const [selectedIds, setSelectedIds] = useState<string[]>(['USR-2026-0819']);
+  const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const [openMenuId, setOpenMenuId] = useState<string | null>(null);
 
   // Modals & Drawer states

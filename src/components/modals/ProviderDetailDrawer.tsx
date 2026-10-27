@@ -78,22 +78,39 @@ export const ProviderDetailDrawer: React.FC<ProviderDetailDrawerProps> = ({
               </span>
             </div>
 
-            <div className="flex items-center gap-2 pt-1">
-              <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-orange-50 text-orange-800 border border-orange-200">
-                {provider.category}
-              </span>
+            <div className="flex flex-wrap items-center gap-1.5 pt-1">
+              {(provider.categories && provider.categories.length > 0
+                ? provider.categories
+                : [provider.category]
+              ).map((cat, idx) => (
+                <span
+                  key={idx}
+                  className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-amber-50 text-amber-900 border border-amber-200"
+                >
+                  {cat}
+                </span>
+              ))}
               <span className="text-xs text-slate-500">
                 · Proveedor Homologado
               </span>
             </div>
           </div>
 
-          {/* Sección Información Empresarial */}
+          {/* Sección Información Empresarial & Empresa Asignada */}
           <div className="space-y-3">
             <h4 className="uppercase text-slate-500 font-bold tracking-wider text-[11px]">
               Información Empresarial
             </h4>
             <div className="space-y-2.5 bg-white border border-slate-200 rounded-xl p-3.5 text-sm">
+              {provider.companyName && (
+                <div className="flex justify-between items-center py-1 border-b border-slate-100">
+                  <span className="text-slate-500 text-xs">Empresa Cliente:</span>
+                  <span className="font-semibold text-slate-900 text-right flex items-center gap-1.5">
+                    <span className="w-2 h-2 rounded-full bg-[#745B00]" />
+                    {provider.companyName}
+                  </span>
+                </div>
+              )}
               <div className="flex justify-between items-center py-1 border-b border-slate-100">
                 <span className="text-slate-500 text-xs">Razón Social:</span>
                 <span className="font-semibold text-slate-900 text-right">
